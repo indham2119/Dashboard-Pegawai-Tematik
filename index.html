@@ -3,13 +3,8 @@
 <head>
 <!--
   Dashboard Pegawai — Direktorat Survei dan Pemetaan Tematik (ATR/BPN)
-  Versi GitHub Pages: halaman statis ini memanggil backend Google Apps Script
-  lewat fetch (lihat blok "KONFIGURASI GITHUB PAGES" di bawah).
-
-  - GAS_URL diisi   -> data live dari Sheet (login pakai akun di sheet "User").
-  - GAS_URL kosong  -> mode contoh (data fiktif):
-      admin   / admin123     -> bisa Tambah + Update
-      pegawai / pegawai123   -> hanya Update + lihat + cetak/export
+  Halaman statis untuk GitHub Pages. Seluruh data diambil dari Google Sheets
+  lewat backend Apps Script; isi GAS_URL di bawah dengan URL Web App /exec.
 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -776,22 +771,28 @@
 <div class="toast" id="toast"></div>
 
 <script>
-/* ================= KONFIGURASI GITHUB PAGES =================
-   Tempel URL Web App GAS (yang berakhiran /exec) di antara tanda kutip.
-   Contoh: 'https://script.google.com/macros/s/AKfy.../exec'
-   Kosongkan ('') untuk mode contoh. */
+/* ================= KONFIGURASI =================
+   Tempel URL Web App Apps Script (yang berakhiran /exec) di antara tanda kutip.
+   Deploy > Manage deployments > Edit > New version
+   (Execute as: Me, Who has access: Anyone). */
 var GAS_URL = 'https://script.google.com/macros/s/AKfycbw21Nv-domlAHLOszpSAfwRAo2i3p_m5rvMG4UfdKyIUg44z0qNzpqYtjoxzVFNz5QuWQ/exec';
 
-/* Jembatan: di luar GAS, google.script.run ditiru dengan fetch ke GAS_URL
-   (doPost, action "rpc"). Kode dashboard di bawah tidak perlu diubah. */
+/* Jembatan: di luar Apps Script, google.script.run ditiru dengan fetch ke
+   GAS_URL (doPost, action "rpc"). Kode dashboard di bawah tidak berubah. */
 (function(){
-  if (window.google && google.script && google.script.run) return;          // di dalam GAS: pakai yang asli
-  if (!/^https:\/\/script\.google\.com\/.+\/exec$/.test(String(GAS_URL).trim())) return; // belum diisi: mode contoh
-  var URL_EXEC = String(GAS_URL).trim();
+  if (window.google && google.script && google.script.run) return;   // dibuka dari dalam Apps Script
+  var URL_EXEC = String(GAS_URL == null ? '' : GAS_URL).trim().replace(/\/+$/, '');
   var FNS = ['login','logout','verifySession','getPegawaiData','addPegawai','updatePegawai','savePhoto',
              'getKegiatanPending','getKegiatanDiproses','kirimNotifikasiTerpilih','kirimUlangNotifikasi'];
 
+  var bad = '';
+  if (!URL_EXEC) bad = 'GAS_URL masih kosong di index.html.';
+  else if (/\/dev$/.test(URL_EXEC)) bad = 'GAS_URL memakai URL /dev. Pakai URL /exec dari Manage deployments.';
+  else if (!/^https:\/\/script\.google\.com\/.+\/exec$/.test(URL_EXEC))
+    bad = 'GAS_URL tidak berbentuk https://script.google.com/.../exec';
+
   function call(fn, args, ok, fail){
+    if (bad) { if (fail) fail(new Error(bad)); return; }
     fetch(URL_EXEC, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },   // simple request -> tanpa preflight CORS
@@ -802,7 +803,7 @@ var GAS_URL = 'https://script.google.com/macros/s/AKfycbw21Nv-domlAHLOszpSAfwRAo
     }).then(function(t){
       var j;
       try { j = JSON.parse(t); }
-      catch (e) { throw new Error('Balasan server bukan JSON. Cek deployment GAS (akses harus "Anyone").'); }
+      catch (e) { throw new Error('Balasan server bukan JSON. Cek deployment (akses harus "Anyone").'); }
       if (!j || !j.ok) throw new Error((j && j.message) || 'Permintaan gagal.');
       if (ok) ok(j.result);
     }).catch(function(e){
@@ -825,38 +826,6 @@ var GAS_URL = 'https://script.google.com/macros/s/AKfycbw21Nv-domlAHLOszpSAfwRAo
 </script>
 
 <script>
-/* ================= SAMPLE DATA (dipakai bila tanpa GAS) ================= */
-/* Seluruh nama & NIP di bawah ini FIKTIF (hanya untuk mode contoh). */
-var SAMPLE_DATA = [
- {row:7, no:1,nip:'000000000000000001',nama:'Bambang Wiratama, S.T., M.Si.',pangkat:'Pembina Utama Muda',gol:'IV/c',pangkatGol:'Pembina Utama Muda / IV/c',jabatan:'Direktur Survei dan Pemetaan Tematik',subdit:'Direktorat Survei dan Pemetaan Tematik',eselon:'II',status:'PNS',ket:'5 Mei 2025',alamat:'',mutasi:''},
- {row:8, no:2,nip:'000000000000000002',nama:'Larasati Prameswari, S.T.',pangkat:'Penata Tk.I',gol:'III/d',jabatan:'Surveyor Pemetaan Ahli Muda',subdit:'IGT',eselon:'',status:'PNS',ket:'2019 – awal penempatan PNS',mutasi:''},
- {row:9, no:3,nip:'000000000000000003',nama:'Made Ayu Kirana, S.Kom.',pangkat:'Penata Tk.I',gol:'III/c',jabatan:'Kepala Subbagian Tata Usaha',subdit:'Tata Usaha',eselon:'IV',status:'PNS',ket:'2020 – dilantik Kasubag TU',mutasi:''},
- {row:10,no:4,nip:'000000000000000004',nama:'Hj. Nurhalimah Tanjung, S.T.',pangkat:'Pembina',gol:'IV/a',jabatan:'Penelaah Teknis Kebijakan',subdit:'Tata Usaha',eselon:'',status:'PNS',ket:'',mutasi:''},
- {row:11,no:5,nip:'000000000000000005',nama:'Fajar Nugroho, S.Tr.',pangkat:'Penata Muda',gol:'III/a',jabatan:'Surveyor Pemetaan Pelaksana',subdit:'IGT',eselon:'',status:'PNS',ket:'',mutasi:''},
- {row:12,no:6,nip:'000000000000000006',nama:'Melati Kusumawardani, S.T.',pangkat:'Penata Muda Tk.I',gol:'III/b',jabatan:'Penelaah Teknis Kebijakan',subdit:'TPR',eselon:'',status:'PNS',ket:'',mutasi:''},
- {row:13,no:7,nip:'000000000000000007',nama:'Ir. Rosmala Dewi, M.M.',pangkat:'Pembina Utama Muda',gol:'IV/c',jabatan:'Penata Kadastral Madya (Inpassing)',subdit:'TPR',eselon:'',status:'PNS',ket:'Februari 2023',mutasi:''},
- {row:14,no:8,nip:'000000000000000008',nama:'Dr. Yudha Prasetya, S.T., M.Sc.',pangkat:'Pembina Tk.I',gol:'IV/b',jabatan:'Penata Tematik Kawasan',subdit:'KAWASAN',eselon:'',status:'PNS',ket:'29 Mei 2023',mutasi:''},
- {row:15,no:9,nip:'000000000000000009',nama:'Citra Anggraini, S.T., M.Sc.',pangkat:'Pembina',gol:'IV/a',jabatan:'Penata Kadastral Madya',subdit:'KAWASAN',eselon:'',status:'PNS',ket:'1 Februari 2023',mutasi:''},
- {row:16,no:10,nip:'000000000000000010',nama:'Ir. Wulan Sekarsari, S.T., M.P.W.K.',pangkat:'Pembina',gol:'IV/a',jabatan:'Penata Kadastral Madya (Inpassing)',subdit:'KAWASAN',eselon:'',status:'PNS',ket:'',mutasi:''},
- {row:17,no:11,nip:'000000000000000011',nama:'Togar Hasiholan, S.T.',pangkat:'Pembina',gol:'IV/a',jabatan:'Kepala Subdirektorat Layanan Informasi',subdit:'IGT',eselon:'III',status:'PNS',ket:'5 Mei 2025',mutasi:''},
- {row:18,no:12,nip:'000000000000000012',nama:'Dewi Kartikasari, S.Sos., M.E.',pangkat:'Pembina',gol:'IV/a',jabatan:'Penata Kadastral Madya (Inpassing)',subdit:'TPR',eselon:'',status:'PNS',ket:'Dilantik sebagai Kepala Seksi',mutasi:''},
- {row:19,no:13,nip:'000000000000000013',nama:'Reza Mahardika, S.T., M.Sc.',pangkat:'Pembina',gol:'IV/a',jabatan:'Penata Kadastral Madya (Inpassing)',subdit:'IGT',eselon:'',status:'PNS',ket:'2026 – mutasi dari PPK',mutasi:'Masuk ke Dit SPT'},
- {row:20,no:14,nip:'000000000000000014',nama:'Salsabila Rahmani, A.Md.',pangkat:'Pengatur Tk.I',gol:'II/b',jabatan:'Pengolah Data dan Informasi',subdit:'Direktorat Survei dan Pemetaan Tematik',eselon:'',status:'CPNS',ket:'2020 – awal penempatan CPNS',mutasi:''},
- {row:21,no:15,nip:'000000000000000015',nama:'Lale Intan Permata, S.P.',pangkat:'Penata Muda Tk.I',gol:'III/b',jabatan:'Penelaah Teknis Kebijakan',subdit:'Direktorat Survei dan Pemetaan Tematik',eselon:'',status:'PNS',ket:'',mutasi:''},
- {row:22,no:16,nip:'000000000000000016',nama:'Galih Pamungkas, S.P.',pangkat:'Penata Muda Tk.I',gol:'III/b',jabatan:'Penelaah Teknis Kebijakan',subdit:'Direktorat Survei dan Pemetaan Tematik',eselon:'',status:'PNS',ket:'',mutasi:''},
- {row:23,no:17,nip:'000000000000000017',nama:'Annisa Fitriani, S.T.',pangkat:'Penata Muda Tk.I',gol:'III/b',jabatan:'Penelaah Teknis Kebijakan',subdit:'TPR',eselon:'',status:'PNS',ket:'',mutasi:''},
- {row:24,no:18,nip:'000000000000000018',nama:'Jonathan Siregar, S.T.',pangkat:'Penata',gol:'III/c',jabatan:'Penata Kadastral Pertama',subdit:'KAWASAN',eselon:'',status:'PNS',ket:'2022 – awal penempatan CPNS',mutasi:''},
- {row:25,no:19,nip:'000000000000000019',nama:'Arya Dirgantara, S.Tr.',pangkat:'Penata',gol:'III/c',jabatan:'Penata Kadastral Ahli Muda',subdit:'KAWASAN',eselon:'',status:'PNS',ket:'Nov 2024 – mutasi dari Kanwil',mutasi:''},
- {row:26,no:20,nip:'000000000000000020',nama:'Rafi Akbar Hakim, A.Md.Ak.',pangkat:'Pengatur',gol:'II/c',jabatan:'Pengolah Data dan Informasi',subdit:'Tata Usaha',eselon:'',status:'CPNS',ket:'Maret 2023',mutasi:''},
- {row:27,no:21,nip:'000000000000000021',nama:'Ilham Syahputra, S.T.',pangkat:'Penata Kadastral',gol:'IX',jabatan:'Penata Kadastral Pertama',subdit:'TPR',eselon:'',status:'PPPK',ket:'PPPK – 1 Juli 2023',mutasi:'Mutasi ke Jombang'},
- {row:28,no:22,nip:'000000000000000022',nama:'Dimas Anggoro, S.T.',pangkat:'Penata Kadastral',gol:'IX',jabatan:'Penata Kadastral Pertama',subdit:'KAWASAN',eselon:'',status:'PPPK',ket:'PPPK – 1 Juli 2023',mutasi:'Mutasi ke Kota Bandung'},
- {row:29,no:23,nip:'000000000000000023',nama:'Tiara Maharani, A.Md.',pangkat:'Asisten Penata Kadastral',gol:'VII',jabatan:'Asisten Penata Kadastral Terampil',subdit:'IGT',eselon:'',status:'PPPK',ket:'1 Maret 2024',mutasi:''},
- {row:30,no:24,nip:'000000000000000024',nama:'Eko Wicaksono, S.T.',pangkat:'Penata Kadastral',gol:'IX',jabatan:'Penata Kadastral Pertama',subdit:'KAWASAN',eselon:'',status:'PPPK',ket:'1 Maret 2024',mutasi:''},
- {row:31,no:25,nip:'',nama:'Yoga Pratama, S.Kom.',pangkat:'',gol:'',jabatan:'Tenaga Ahli GIS / Pemetaan',subdit:'IGT',eselon:'',status:'Tenaga Ahli',ket:'Kontrak 2025',mutasi:''},
- {row:32,no:26,nip:'',nama:'Sri Lestari',pangkat:'',gol:'',jabatan:'Pengadministrasi Umum',subdit:'Tata Usaha',eselon:'',status:'Tenaga Pendukung',ket:'PPNPN',mutasi:''},
- {row:33,no:27,nip:'',nama:'Wawan Setiawan',pangkat:'',gol:'',jabatan:'Pengemudi',subdit:'Tata Usaha',eselon:'',status:'Tenaga Pendukung',ket:'PPNPN',mutasi:''},
- {row:34,no:28,nip:'',nama:'Maya Puspita',pangkat:'',gol:'',jabatan:'Tenaga Ahli Hukum Pertanahan',subdit:'TPR',eselon:'',status:'Tenaga Ahli',ket:'Kontrak 2026',mutasi:''}
-];
 
 /* ================= KONFIG ================= */
 var GROUP_ORDER=['Direktorat Survei dan Pemetaan Tematik','Tata Usaha','IGT','TPR','KAWASAN'];
@@ -979,7 +948,6 @@ function mapRow(r){
 var DATA=[], VIEW=[], kelompok='PNS', activeSub='ALL', sortKey='golRank', sortDir=1, editRow=null, distKel='ASN',
     showAllRows=false;
 var TABLE_LIMIT=10;
-var HAS_GAS = !!(window.google && google.script && google.script.run);
 
 /* ================= SESSION / AUTH ================= */
 var SESSION = { token:'', username:'', role:'' };
@@ -991,27 +959,21 @@ function storeSession(){try{localStorage.setItem(SESS_KEY,JSON.stringify(SESSION
 function readStoredSession(){try{var s=localStorage.getItem(SESS_KEY);return s?JSON.parse(s):null;}catch(e){return null;}}
 function clearStoredSession(){try{localStorage.removeItem(SESS_KEY);}catch(e){}}
 
-// Akun demo untuk mode contoh (standalone tanpa GAS)
-var SAMPLE_USERS = [
-  { username:'admin',   password:'admin123',   role:'admin' },
-  { username:'pegawai', password:'pegawai123', role:'pegawai' }
-];
+
 
 function initAuth(){
   var stored=readStoredSession();
   if(stored && stored.token){
-    if(HAS_GAS){
-      google.script.run.withSuccessHandler(function(res){
-        if(res && res.ok){
-          SESSION={token:stored.token,username:res.username,role:res.role};
-          storeSession(); applyRoleUI(); hideLogin(); boot();
-        }else{ clearStoredSession(); showLogin(); }
-      }).withFailureHandler(function(){ showLogin(); })
-        .verifySession(stored.token);
-      return;
-    }else{
-      SESSION=stored; applyRoleUI(); hideLogin(); boot(); return;   // mode contoh
-    }
+    google.script.run.withSuccessHandler(function(res){
+      if(res && res.ok){
+        SESSION={token:stored.token,username:res.username,role:res.role};
+        storeSession(); applyRoleUI(); hideLogin(); boot();
+      }else{ clearStoredSession(); showLogin(); }
+    }).withFailureHandler(function(e){
+      clearStoredSession(); showLogin();
+      setTimeout(function(){ toast('Tidak terhubung ke server: '+pesan_(e), true); }, 300);
+    }).verifySession(stored.token);
+    return;
   }
   showLogin();
 }
@@ -1041,20 +1003,14 @@ function doLogin(){
     toast('Selamat datang, '+res.username);
   };
 
-  if(HAS_GAS){
-    google.script.run.withSuccessHandler(finish).withFailureHandler(function(e){
-      btn.disabled=false; btn.textContent='Masuk';
-      err.textContent='Gagal terhubung: '+(e&&e.message?e.message:e);
-    }).login(u,p);
-  }else{
-    var m=SAMPLE_USERS.filter(function(x){return x.username.toLowerCase()===u.toLowerCase()&&x.password===p;})[0];
-    finish(m?{ok:true,token:'sample-token',username:m.username,role:m.role}
-            :{ok:false,message:'Username/password salah. (contoh: admin/admin123 atau pegawai/pegawai123)'});
-  }
+  google.script.run.withSuccessHandler(finish).withFailureHandler(function(e){
+    btn.disabled=false; btn.textContent='Masuk';
+    err.textContent='Gagal terhubung: '+pesan_(e);
+  }).login(u,p);
 }
 
 function doLogout(){
-  if(HAS_GAS && SESSION.token){ try{ google.script.run.logout(SESSION.token); }catch(e){} }
+  if(SESSION.token){ try{ google.script.run.logout(SESSION.token); }catch(e){} }
   clearStoredSession();
   SESSION={token:'',username:'',role:''}; DATA=[]; VIEW=[];
   document.getElementById('userPill').style.display='none';
@@ -1075,16 +1031,21 @@ function applyRoleUI(){
 }
 
 /* ================= LOAD ================= */
+function pesan_(e){ return (e&&e.message)?e.message:String(e); }
+
 function boot(){
   var pill=document.getElementById('src-pill');
-  if(HAS_GAS){
-    pill.textContent='Data live (Sheet)';
-    google.script.run.withSuccessHandler(onData).withFailureHandler(function(e){
-      var msg=(e&&e.message)?e.message:String(e);
-      if(/sesi/i.test(msg)){ toast('Sesi berakhir, silakan login ulang',true); doLogout(); return; }
-      pill.textContent='Gagal baca sheet — pakai contoh'; HAS_GAS=false; onData(SAMPLE_DATA);
-    }).getPegawaiData(SESSION.token);
-  }else{ pill.textContent='Mode contoh (standalone)'; onData(SAMPLE_DATA); }
+  pill.textContent='Memuat data…'; pill.title='';
+  google.script.run.withSuccessHandler(function(rows){
+    pill.textContent='Data live (Sheet)'; onData(rows);
+  }).withFailureHandler(function(e){
+    var msg=pesan_(e);
+    if(/sesi/i.test(msg)){ toast('Sesi berakhir, silakan login ulang',true); doLogout(); return; }
+    pill.textContent='Gagal memuat data'; pill.title=msg;
+    hideSplash(); onData([]);
+    toast('Gagal ambil data: '+msg, true);
+    if(window.console) console.error('[Dashboard] getPegawaiData:', msg);
+  }).getPegawaiData(SESSION.token);
 }
 function onData(rows){ DATA=(rows||[]).map(mapRow); render(); hideSplash(); }
 
@@ -1694,32 +1655,17 @@ function saveModal(){
 
   // Simpan record ke sheet (obj.foto sudah berisi fileId final).
   var persist=function(){
-    if(HAS_GAS){
-      google.script.run.withSuccessHandler(done).withFailureHandler(fail)[editRow?'updatePegawai':'addPegawai'](obj, SESSION.token);
-    }else{
-      // mode contoh: simpan lokal (tidak tersimpan permanen)
-      if(editRow){var i=DATA.map(function(d){return String(d.row);}).indexOf(String(editRow));
-        if(i>=0)DATA[i]=mapRow(Object.assign({},obj,{row:editRow,no:DATA[i].no,status:obj.status}));}
-      else{var mx=Math.max.apply(null,[0].concat(DATA.map(function(d){return +d.no||0;})));
-        var nr=Math.max.apply(null,[100].concat(DATA.map(function(d){return +d.row||0;})))+1;
-        DATA.push(mapRow(Object.assign({},obj,{row:nr,no:mx+1})));}
-      render();done(null);toast((editRow?'Data diperbarui':'Pegawai ditambahkan')+' (mode contoh — tidak tersimpan)');
-    }
+    google.script.run.withSuccessHandler(done).withFailureHandler(fail)[editRow?'updatePegawai':'addPegawai'](obj, SESSION.token);
   };
 
   // Bila ada foto baru dipilih, upload dulu ke Drive lalu baru simpan record.
   if(pendingFotoDataUrl){
-    if(HAS_GAS){
-      btn.textContent='Mengunggah foto…';
-      var fname=(obj.nama||'foto').replace(/[^\w.\-]+/g,'_');
-      google.script.run.withSuccessHandler(function(res){
-        if(res && res.ok){ obj.foto=res.fileId; fld('foto').value=res.fileId; persist(); }
-        else { fail('Upload foto gagal.'); }
-      }).withFailureHandler(fail).savePhoto(pendingFotoDataUrl, fname, SESSION.token);
-    }else{
-      obj.foto=pendingFotoDataUrl;   // mode contoh: pakai data URL langsung untuk preview
-      persist();
-    }
+    btn.textContent='Mengunggah foto…';
+    var fname=(obj.nama||'foto').replace(/[^\w.\-]+/g,'_');
+    google.script.run.withSuccessHandler(function(res){
+      if(res && res.ok){ obj.foto=res.fileId; fld('foto').value=res.fileId; persist(); }
+      else { fail('Upload foto gagal.'); }
+    }).withFailureHandler(fail).savePhoto(pendingFotoDataUrl, fname, SESSION.token);
   }else{
     persist();
   }
@@ -1792,7 +1738,6 @@ var notifMode='pending';
 
 function doKirimNotifikasi(){
   if(SESSION.role!=='admin'){toast('Hanya admin yang dapat mengirim notifikasi',true);return;}
-  if(!HAS_GAS){toast('Kirim notifikasi hanya aktif di mode live (GAS).',true);return;}
   notifMode='pending';
   document.querySelectorAll('#notifSeg button').forEach(function(x){x.classList.toggle('on',x.getAttribute('data-nm')==='pending');});
   document.getElementById('notifModal').classList.add('open');
