@@ -491,6 +491,38 @@
 #absen .absen-note{max-width:460px;margin:14px auto 0;text-align:center;font-size:11.5px;
   color:var(--ink-soft);line-height:1.6}
 #absen button[disabled]{opacity:.45;cursor:not-allowed}
+#absen .absen-lokasi{max-width:460px;margin:0 auto 14px;text-align:center;font-size:12px;
+  color:var(--ink-soft);line-height:1.6}
+#absen .absen-lokasi .lk-pil{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);
+  background:var(--surface);border-radius:999px;padding:6px 13px;font-weight:600;font-size:12px}
+#absen .absen-lokasi .lk-pil.ok{border-color:#2f7a44;background:#eef7f0;color:#2f7a44}
+#absen .absen-lokasi .lk-pil.jauh{border-color:#a23b3b;background:#fbeeee;color:#a23b3b}
+#absen .absen-setup{max-width:460px;margin:12px auto 0;border:1px dashed var(--emas);background:#fffaec;
+  border-radius:11px;padding:11px 13px;font-size:11.5px;color:#6b5410;line-height:1.7;text-align:left}
+#absen .absen-setup code{font-family:var(--mono);font-size:11.5px;background:#fff;border:1px solid var(--emas-soft);
+  border-radius:5px;padding:1px 6px;display:inline-block;margin:2px 0}
+#absen .absen-setup button{margin-top:7px;font:inherit;font-size:11px;font-weight:700;cursor:pointer;
+  border:1px solid var(--emas);background:#fff;color:#6b5410;border-radius:7px;padding:5px 11px}
+
+/* ---------- REKAP ABSEN ---------- */
+#rekap .rekap-bar{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;margin-bottom:16px}
+#rekap .rk-fld{display:flex;flex-direction:column;gap:5px}
+#rekap .rk-fld span{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft)}
+#rekap .rk-fld input,#rekap .rk-fld select{font:inherit;font-size:13px;padding:8px 11px;border:1px solid var(--line);
+  border-radius:9px;background:#fff;color:var(--ink)}
+#rekap .rk-fld select{min-width:190px}
+#rekap .rekap-exports{display:flex;gap:9px;margin-left:auto;flex-wrap:wrap}
+#rekap .rekap-kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:14px}
+#rekap .rekap-kpi:empty{display:none}
+#rekap .rekap-info{font-size:12px;color:var(--ink-soft);margin-bottom:12px}
+#rekap .rk-sub{font-size:10.5px;color:var(--ink-soft)}
+#rekap .rk-dash{color:var(--line)}
+#rekap .rk-note{font-size:10px;color:#a23b3b;margin-top:2px}
+#rekap .rk-badge{display:inline-block;font-size:11px;font-weight:700;border-radius:999px;padding:3px 10px;white-space:nowrap}
+#rekap .rk-badge.rk-tepat{background:#eef7f0;color:#2f7a44;border:1px solid #bddcc6}
+#rekap .rk-badge.rk-telat{background:#fbeeee;color:#a23b3b;border:1px solid #e3c2c2}
+#rekap .rk-badge.rk-kosong{background:#fffaec;color:#6b5410;border:1px solid var(--emas-soft)}
+#rekap button[disabled]{opacity:.45;cursor:not-allowed}
 </style>
 </head>
 <body>
@@ -514,6 +546,7 @@
       <a class="active" data-go="ringkasan"><span class="ic">◉</span><span class="lbl">Ringkasan</span></a>
       <a data-go="distribusi"><span class="ic">▤</span><span class="lbl">Distribusi</span></a>
       <a data-go="absen"><span class="ic">📸</span><span class="lbl">Absen Wajah</span></a>
+      <a data-go="rekap" id="navRekap" style="display:none"><span class="ic">🧾</span><span class="lbl">Rekap Absen</span></a>
       <div class="grp">Daftar Pegawai</div>
       <a data-go="roster" data-kel="PNS"><span class="ic">👥</span><span class="lbl">PNS</span><span class="cnt-b" id="navc-PNS">0</span></a>
       <a data-go="roster" data-kel="TENAGA"><span class="ic">👷</span><span class="lbl">TP - TA</span><span class="cnt-b" id="navc-TENAGA">0</span></a>
@@ -638,6 +671,8 @@
       <div class="ai-meta" id="absenMeta"></div>
     </div>
 
+    <div class="absen-lokasi" id="absenLokasi"></div>
+
     <div class="absen-actions">
       <button class="btn-primary" id="absenStart">Mulai Kamera</button>
       <div class="absen-pair" id="absenPair" style="display:none">
@@ -651,6 +686,38 @@
     </div>
 
     <div class="absen-note" id="absenNote"></div>
+    <div class="absen-setup" id="absenSetup" style="display:none"></div>
+  </div>
+</section>
+
+      <section id="rekap">
+  <div class="section-h"><span class="eyebrow">Absensi</span><h2>Rekap Absen</h2><div class="rule"></div></div>
+  <div class="card">
+    <div class="rekap-bar">
+      <label class="rk-fld"><span>Dari</span><input type="date" id="rkDari"></label>
+      <label class="rk-fld"><span>Sampai</span><input type="date" id="rkSampai"></label>
+      <label class="rk-fld"><span>Pegawai</span>
+        <select id="rkPegawai"><option value="">Semua pegawai</option></select>
+      </label>
+      <button class="btn-primary" id="rkMuat">Muat Rekap</button>
+      <div class="rekap-exports">
+        <button class="btn-export" id="rkPdf" disabled>▣ Cetak PDF</button>
+        <button class="btn-export" id="rkExcel" disabled>▦ Export Excel</button>
+      </div>
+    </div>
+
+    <div class="rekap-kpi" id="rkKpi"></div>
+    <div class="rekap-info" id="rkInfo">Pilih rentang tanggal lalu tekan Muat Rekap.</div>
+
+    <div class="tbl-wrap">
+      <table id="rkTable">
+        <thead><tr>
+          <th>Tanggal</th><th>Nama / NIP</th><th>Masuk</th><th>Keluar</th>
+          <th>Status</th><th>Telat</th><th>Durasi</th><th>Jarak</th>
+        </tr></thead>
+        <tbody id="rkBody"></tbody>
+      </table>
+    </div>
   </div>
 </section>
     </div>
@@ -1068,6 +1135,7 @@ function applyRoleUI(){
   var btnNotif=document.getElementById('btnNotif');
   if(btnNotif) btnNotif.style.display=isAdmin?'':'none';
   if(window.absenApplyRole) window.absenApplyRole();
+  if(window.rekapApplyRole) window.rekapApplyRole();
 }
 
 /* ================= LOAD ================= */
@@ -1088,7 +1156,8 @@ function boot(){
   }).getPegawaiData(SESSION.token);
 }
 function onData(rows){ DATA=(rows||[]).map(mapRow); render(); hideSplash();
-  if(window.absenRefreshPegawai) window.absenRefreshPegawai(); }
+  if(window.absenRefreshPegawai) window.absenRefreshPegawai();
+  if(window.rekapRefreshPegawai) window.rekapRefreshPegawai(); }
 
 /* ================= RENDER ================= */
 function render(){renderKPI();renderDistSeg();renderDist();renderSeg();renderChips();applyFilter();}
@@ -2023,8 +2092,13 @@ function absenApi(action, payload){
   var noteEl   = document.getElementById('absenNote');
   var tabEnrol = document.getElementById('absenTabEnroll');
 
+  var lokasiEl = document.getElementById('absenLokasi');
+  var setupEl  = document.getElementById('absenSetup');
+
   var mode='absen', libLoaded=false, stream=null, running=false, scanning=false, busy=false;
   var enrolled=[], enrolledLoaded=false, match=null, lastDesc=null;
+  var cfg=null;                                   // konfigurasi kantor & jam kerja dari server
+  var gps={ lat:null, lng:null, akurasi:null, galat:'' }, watchId=null;
 
   function set(t,c){ st.textContent=t; st.style.color=c||''; }
   function note(t){ noteEl.textContent=t||''; }
@@ -2061,7 +2135,8 @@ function absenApi(action, payload){
     set('Mengambil data wajah terdaftar…');
     return absenApi('enrolled').then(function(j){
       enrolled = j.enrolled || []; enrolledLoaded = true;
-      isiDropdown();
+      cfg = j.cfg || null;
+      isiDropdown(); tampilLokasi();
     });
   }
   function kunciNama(n){ return String(n==null?'':n).toLowerCase().replace(/\s+/g,' ').trim(); }
@@ -2085,6 +2160,89 @@ function absenApi(action, payload){
     if(terpilih) selPeg.value = terpilih;
   }
 
+  /* ---------- lokasi & radius ---------- */
+  function jarakMeter(lat1,lng1,lat2,lng2){
+    var R=6371000, rad=Math.PI/180;
+    var dLat=(lat2-lat1)*rad, dLng=(lng2-lng1)*rad;
+    var a=Math.sin(dLat/2)*Math.sin(dLat/2)+
+          Math.cos(lat1*rad)*Math.cos(lat2*rad)*Math.sin(dLng/2)*Math.sin(dLng/2);
+    return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+  }
+  function formatJarak(m){
+    return (m>=1000) ? ((Math.round(m/100)/10)+' km') : (Math.round(m)+' m');
+  }
+  function jarakKeKantor(){
+    if(!cfg || !cfg.kantorSet || gps.lat===null) return null;
+    return jarakMeter(gps.lat, gps.lng, cfg.lat, cfg.lng);
+  }
+  function diDalamRadius(){
+    var d=jarakKeKantor();
+    return d!==null && d<=(cfg.radius||1000);
+  }
+  function mulaiPantauGps(){
+    if(watchId!==null || !navigator.geolocation) return;
+    gps.galat='';
+    watchId=navigator.geolocation.watchPosition(function(p){
+      gps.lat=p.coords.latitude; gps.lng=p.coords.longitude;
+      gps.akurasi=p.coords.accuracy; gps.galat='';
+      tampilLokasi(); perbaruiTombol();
+    }, function(err){
+      gps.lat=null; gps.lng=null;
+      gps.galat = (err && err.code===1) ? 'Izin lokasi ditolak.' : 'Lokasi tidak terbaca.';
+      tampilLokasi(); perbaruiTombol();
+    }, { enableHighAccuracy:true, timeout:15000, maximumAge:10000 });
+  }
+  function hentikanPantauGps(){
+    if(watchId!==null && navigator.geolocation) navigator.geolocation.clearWatch(watchId);
+    watchId=null;
+  }
+  function tampilLokasi(){
+    if(!lokasiEl) return;
+    if(cfg && !cfg.kantorSet){
+      lokasiEl.innerHTML='<span class="lk-pil jauh">Koordinat kantor belum diatur</span>';
+      tampilSetup(); return;
+    }
+    if(setupEl) setupEl.style.display='none';
+    if(!running && gps.lat===null){ lokasiEl.innerHTML=''; return; }
+    if(gps.galat){
+      lokasiEl.innerHTML='<span class="lk-pil jauh">'+esc(gps.galat)+'</span>'+
+        '<div style="margin-top:6px">Absen memerlukan lokasi aktif.</div>';
+      return;
+    }
+    if(gps.lat===null){
+      lokasiEl.innerHTML='<span class="lk-pil">Membaca lokasi…</span>'; return;
+    }
+    var d=jarakKeKantor();
+    if(d===null){ lokasiEl.innerHTML=''; return; }
+    var batas=(cfg&&cfg.radius)||1000, ok=d<=batas;
+    lokasiEl.innerHTML='<span class="lk-pil '+(ok?'ok':'jauh')+'">'+
+        (ok?'Di dalam radius':'Di luar radius')+' · '+formatJarak(d)+' dari kantor</span>'+
+      '<div style="margin-top:6px">Batas '+formatJarak(batas)+
+        (gps.akurasi?(' · akurasi GPS ±'+Math.round(gps.akurasi)+' m'):'')+'</div>';
+  }
+  function tampilSetup(){
+    if(!setupEl) return;
+    if(SESSION.role!=='admin'){
+      setupEl.style.display='';
+      setupEl.innerHTML='Koordinat kantor belum diatur, jadi absen belum bisa dipakai. Hubungi admin.';
+      return;
+    }
+    var koor = (gps.lat!==null)
+      ? ('<code>KANTOR_LAT: '+gps.lat.toFixed(6)+',</code><br><code>KANTOR_LNG: '+gps.lng.toFixed(6)+',</code>'+
+         '<br><button type="button" id="absenSalinKoor">Salin koordinat</button>')
+      : 'Nyalakan kamera saat berada di kantor untuk membaca koordinat posisi Anda.';
+    setupEl.style.display='';
+    setupEl.innerHTML='<b>Koordinat kantor belum diisi.</b> Semua absen akan ditolak sampai '+
+      '<code>ABSEN_CFG.KANTOR_LAT</code> dan <code>KANTOR_LNG</code> di Code.gs diisi, lalu deploy versi baru.<br>'+koor;
+    var b=document.getElementById('absenSalinKoor');
+    if(b) b.onclick=function(){
+      var t='KANTOR_LAT: '+gps.lat.toFixed(6)+',\nKANTOR_LNG: '+gps.lng.toFixed(6)+',';
+      if(navigator.clipboard) navigator.clipboard.writeText(t).then(function(){ toast('Koordinat disalin'); },
+                                                                   function(){ toast('Gagal menyalin',true); });
+      else toast('Salin manual dari teks di atas',true);
+    };
+  }
+
   /* ---------- kamera ---------- */
   function mulai(){
     btn.disabled=true;
@@ -2098,7 +2256,7 @@ function absenApi(action, payload){
       stream=s; video.srcObject=s; return video.play();
     }).then(function(){
       running=true; btn.textContent='Hentikan Kamera'; btn.disabled=false;
-      identBox.style.display='';
+      identBox.style.display=''; mulaiPantauGps(); tampilLokasi();
       set(mode==='absen' ? 'Arahkan wajah ke kamera…' : 'Arahkan wajah, lalu pilih nama dan tekan Daftarkan.');
       loop();
     }).catch(function(err){
@@ -2113,13 +2271,14 @@ function absenApi(action, payload){
   }
   function berhenti(){
     running=false; match=null; lastDesc=null;
+    hentikanPantauGps();
     if(stream){ stream.getTracks().forEach(function(t){ t.stop(); }); stream=null; }
     video.srcObject=null;
     var c=overlay.getContext('2d'); c.clearRect(0,0,overlay.width,overlay.height);
     btn.textContent='Mulai Kamera';
     identBox.style.display='none'; identBox.classList.remove('hit');
     set('Kamera dihentikan.');
-    perbaruiTombol();
+    tampilLokasi(); perbaruiTombol();
   }
 
   /* ---------- pemindaian ---------- */
@@ -2157,7 +2316,10 @@ function absenApi(action, payload){
     }
     if(best && bd<=ABSEN_UI.THRESHOLD){
       match={ nip:best.nip, nama:best.nama, jarak:bd };
-      set('Wajah dikenali.', '#2f7a44');
+      if(diDalamRadius()) set('Wajah dikenali.', '#2f7a44');
+      else if(cfg && !cfg.kantorSet) set('Wajah dikenali, tapi koordinat kantor belum diatur.', '#a23b3b');
+      else if(gps.lat===null) set('Wajah dikenali. Menunggu lokasi…');
+      else set('Wajah dikenali, tapi di luar radius kantor.', '#a23b3b');
     }else{
       match=null;
       set(enrolled.length ? 'Wajah tidak dikenali.' : 'Belum ada wajah terdaftar.', enrolled.length?'#a23b3b':'');
@@ -2175,7 +2337,7 @@ function absenApi(action, payload){
     identMt.textContent = match ? ('jarak '+match.jarak.toFixed(3)+' · ambang '+ABSEN_UI.THRESHOLD) : '';
   }
   function perbaruiTombol(){
-    var bisaAbsen = running && !!match && !busy;
+    var bisaAbsen = running && !!match && !busy && diDalamRadius();
     bMasuk.disabled = !bisaAbsen; bKeluar.disabled = !bisaAbsen;
     bEnroll.disabled = !(running && !!lastDesc && !busy && selPeg.selectedIndex > 0);
   }
@@ -2204,10 +2366,15 @@ function absenApi(action, payload){
   }
   function kirimAbsen(tipe){
     if(!match || busy) return;
+    if(!diDalamRadius()){
+      var dd=jarakKeKantor();
+      toast(dd===null ? 'Lokasi belum terbaca.' : ('Di luar radius kantor ('+formatJarak(dd)+').'), true);
+      return;
+    }
     var orang = { nip:match.nip, nama:match.nama, jarak:match.jarak };
     busy=true; perbaruiTombol(); set('Mengirim absen '+tipe+'…');
     var bukti = snapshot();
-    ambilGps().then(function(pos){
+    Promise.resolve(gps.lat!==null ? { lat:gps.lat, lng:gps.lng } : ambilGps()).then(function(pos){
       return absenApi('absen', {
         nip: orang.nip, nama: orang.nama, tipe: tipe,
         jarak: Math.round(orang.jarak*1000)/1000,
@@ -2217,8 +2384,10 @@ function absenApi(action, payload){
     }).then(function(j){
       if(j.dup){ toast(j.message || 'Sudah absen beberapa menit lalu.', true); set(j.message||'Sudah absen.', '#a23b3b'); }
       else {
-        toast('Absen '+tipe+' tercatat — '+j.nama+' · '+j.waktu);
-        set('✅ '+j.nama+' · '+tipe+' '+j.waktu, '#2f7a44');
+        var ket = j.status ? (' · '+j.status+(j.menit?(' '+j.menit+' menit'):'')) : '';
+        toast('Absen '+tipe+' tercatat — '+j.nama+' · '+j.waktu+ket);
+        set('✅ '+j.nama+' · '+tipe+' '+j.waktu+ket,
+            (j.status==='Terlambat'||j.status==='Pulang Cepat') ? '#8a6d10' : '#2f7a44');
       }
     }).catch(function(e){
       var m=pesan(e);
@@ -2287,9 +2456,293 @@ function absenApi(action, payload){
     tabEnrol.style.display = admin ? '' : 'none';
     if(!admin && mode==='enroll') setMode('absen');
     if(admin) isiDropdown();
+    tampilLokasi();
   };
   // Dropdown ikut diperbarui tiap data pegawai selesai dimuat.
   window.absenRefreshPegawai = isiDropdown;
+})();
+
+/* ===== REKAP ABSEN (admin) =====
+   Mengambil baris mentah dari sheet Absensi, lalu dirangkum jadi
+   satu baris per pegawai per hari: jam masuk, jam keluar, status, telat. */
+var REKAP = { baris: [], mentah: [], dari: '', sampai: '', cfg: null };
+
+function rkTanggalISO(d){
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function rkTanggalID(iso){
+  var b=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+  var p=String(iso||'').split('-'); if(p.length!==3) return iso||'';
+  return p[2]+' '+b[(+p[1]||1)-1]+' '+p[0];
+}
+function rkHari(iso){
+  var h=['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+  var d=new Date(iso+'T00:00:00'); return isNaN(d)?'':h[d.getDay()];
+}
+function rkJam(hhmmss){ return String(hhmmss||'').slice(0,5); }
+function rkMenitDariJam(hhmmss){
+  var p=String(hhmmss||'').split(':');
+  if(p.length<2) return null;
+  return (+p[0])*60+(+p[1]);
+}
+function rkDurasi(masuk, keluar){
+  var a=rkMenitDariJam(masuk), b=rkMenitDariJam(keluar);
+  if(a==null||b==null||b<a) return '';
+  var m=b-a; return Math.floor(m/60)+'j '+String(m%60).padStart(2,'0')+'m';
+}
+function rkJarak(m){
+  if(m==null||m==='') return '';
+  return (m>=1000) ? ((Math.round(m/100)/10)+' km') : (Math.round(m)+' m');
+}
+
+/* Rangkum baris mentah -> satu baris per pegawai per hari. */
+function rkRangkum(rows){
+  var peta={}, urut=[];
+  (rows||[]).forEach(function(r){
+    var kunci=r.tanggal+'|'+(r.nip || r.nama);
+    if(!peta[kunci]){
+      peta[kunci]={ tanggal:r.tanggal, nip:r.nip, nama:r.nama,
+                    masuk:'', keluar:'', status:'', telat:0, jarak:null, buktiMasuk:'', buktiKeluar:'' };
+      urut.push(kunci);
+    }
+    var g=peta[kunci];
+    if(!g.nama && r.nama) g.nama=r.nama;
+    if(r.tipe==='Masuk'){
+      if(!g.masuk || r.jam<g.masuk){                   // absen masuk paling awal
+        g.masuk=r.jam; g.status=r.status; g.telat=r.menit||0; g.buktiMasuk=r.bukti;
+      }
+    }else if(r.tipe==='Keluar'){
+      if(!g.keluar || r.jam>g.keluar){                 // absen pulang paling akhir
+        g.keluar=r.jam; g.buktiKeluar=r.bukti;
+      }
+    }
+    if(r.jarakKantor!=null && (g.jarak==null || r.jarakKantor>g.jarak)) g.jarak=r.jarakKantor;
+  });
+  return urut.map(function(k){
+    var g=peta[k];
+    if(!g.masuk) g.status='Tanpa Absen Masuk';
+    else if(!g.keluar) g.statusPulang='Belum absen pulang';
+    return g;
+  }).sort(function(a,b){
+    if(a.tanggal!==b.tanggal) return a.tanggal<b.tanggal?-1:1;
+    return (a.nama||'')<(b.nama||'')?-1:1;
+  });
+}
+
+function rkIsiDropdown(){
+  var sel=document.getElementById('rkPegawai');
+  if(!sel) return;
+  var kini=sel.value;
+  var list=(typeof DATA!=='undefined'?DATA:[]).filter(function(d){return d.nama;});
+  sel.innerHTML='<option value="">Semua pegawai</option>'+list.map(function(d){
+    return '<option value="'+esc(d.nip||d.nama)+'">'+esc(d.nama)+'</option>';
+  }).join('');
+  if(kini) sel.value=kini;
+}
+
+function rkMuat(){
+  var dari=document.getElementById('rkDari').value;
+  var sampai=document.getElementById('rkSampai').value;
+  if(dari && sampai && dari>sampai){ toast('Tanggal "Dari" melewati "Sampai".',true); return; }
+  var btn=document.getElementById('rkMuat'); btn.disabled=true; btn.textContent='Memuat…';
+  document.getElementById('rkInfo').textContent='Mengambil data absensi…';
+  absenApi('rekap',{dari:dari,sampai:sampai}).then(function(j){
+    REKAP.mentah=j.rows||[]; REKAP.cfg=j.cfg||null; REKAP.dari=dari; REKAP.sampai=sampai;
+    rkRender();
+  }).catch(function(e){
+    var m=(e&&e.message)?e.message:String(e);
+    if(/sesi/i.test(m)){ toast('Sesi berakhir, silakan login ulang',true); doLogout(); return; }
+    document.getElementById('rkInfo').textContent='Gagal memuat: '+m;
+    toast('Gagal memuat rekap: '+m,true);
+  }).then(function(){ btn.disabled=false; btn.textContent='Muat Rekap'; });
+}
+
+function rkRender(){
+  var filter=document.getElementById('rkPegawai').value;
+  var mentah=REKAP.mentah;
+  if(filter) mentah=mentah.filter(function(r){ return (r.nip||r.nama)===filter; });
+  var baris=rkRangkum(mentah);
+  REKAP.baris=baris;
+
+  var tepat=baris.filter(function(b){return b.status==='Tepat Waktu';}).length;
+  var telat=baris.filter(function(b){return b.status==='Terlambat';}).length;
+  var tanpaMasuk=baris.filter(function(b){return b.status==='Tanpa Absen Masuk';}).length;
+  var belumPulang=baris.filter(function(b){return b.masuk && !b.keluar;}).length;
+  var totalTelat=baris.reduce(function(s,b){return s+(b.status==='Terlambat'?(b.telat||0):0);},0);
+  var orang={}; baris.forEach(function(b){orang[b.nip||b.nama]=1;});
+
+  document.getElementById('rkKpi').innerHTML=[
+    ['Hari Kehadiran', baris.length, Object.keys(orang).length+' pegawai',''],
+    ['Tepat Waktu', tepat, baris.length?Math.round(tepat/baris.length*100)+'% kehadiran':'—',''],
+    ['Terlambat', telat, totalTelat?('total '+totalTelat+' menit'):'—','gold'],
+    ['Belum Absen Pulang', belumPulang, tanpaMasuk?(tanpaMasuk+' tanpa absen masuk'):'—','teal']
+  ].map(function(c){
+    return '<div class="kpi '+c[3]+'"><div class="lab">'+c[0]+'</div><div class="val">'+c[1]+'</div><div class="sub">'+c[2]+'</div></div>';
+  }).join('');
+
+  var tb=document.getElementById('rkBody');
+  if(!baris.length){
+    tb.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--ink-soft);padding:26px">Tidak ada data absensi pada rentang ini.</td></tr>';
+  }else{
+    tb.innerHTML=baris.map(function(b){
+      var kelas = b.status==='Terlambat' ? 'rk-telat'
+                : b.status==='Tanpa Absen Masuk' ? 'rk-kosong' : 'rk-tepat';
+      var catatan = (b.masuk && !b.keluar) ? '<div class="rk-note">belum absen pulang</div>' : '';
+      return '<tr>'+
+        '<td><b>'+esc(rkTanggalID(b.tanggal))+'</b><div class="rk-sub">'+esc(rkHari(b.tanggal))+'</div></td>'+
+        '<td><div class="nm">'+esc(b.nama||'—')+'</div><div class="nip">'+(esc(b.nip)||'—')+'</div></td>'+
+        '<td>'+(b.masuk?esc(rkJam(b.masuk)):'<span class="rk-dash">—</span>')+'</td>'+
+        '<td>'+(b.keluar?esc(rkJam(b.keluar)):'<span class="rk-dash">—</span>')+catatan+'</td>'+
+        '<td><span class="rk-badge '+kelas+'">'+esc(b.status||'—')+'</span></td>'+
+        '<td>'+(b.status==='Terlambat'?(b.telat+' m'):'<span class="rk-dash">—</span>')+'</td>'+
+        '<td>'+(esc(rkDurasi(b.masuk,b.keluar))||'<span class="rk-dash">—</span>')+'</td>'+
+        '<td>'+(esc(rkJarak(b.jarak))||'<span class="rk-dash">—</span>')+'</td>'+
+      '</tr>';
+    }).join('');
+  }
+
+  document.getElementById('rkInfo').textContent =
+    baris.length ? (baris.length+' baris · '+rkJudulRentang()) : ('Tidak ada data · '+rkJudulRentang());
+  document.getElementById('rkPdf').disabled   = !baris.length;
+  document.getElementById('rkExcel').disabled = !baris.length;
+}
+
+function rkJudulRentang(){
+  var d=REKAP.dari, s=REKAP.sampai;
+  if(d&&s) return rkTanggalID(d)+' s/d '+rkTanggalID(s);
+  if(d) return 'sejak '+rkTanggalID(d);
+  if(s) return 'sampai '+rkTanggalID(s);
+  return 'seluruh periode';
+}
+function rkNamaFilter(){
+  var sel=document.getElementById('rkPegawai');
+  return (sel && sel.selectedIndex>0) ? sel.options[sel.selectedIndex].textContent : 'Semua pegawai';
+}
+
+/* ---------- ekspor ---------- */
+function rkExportExcel(){
+  if(!REKAP.baris.length){ toast('Tidak ada data untuk diekspor',true); return; }
+  var html='<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel">'+
+    '<head><meta charset="UTF-8"></head><body>'+
+    '<h2>Rekap Absensi</h2>'+
+    '<p>Direktorat Survei dan Pemetaan Tematik</p>'+
+    '<p>Periode: '+esc(rkJudulRentang())+'</p>'+
+    '<p>Pegawai: '+esc(rkNamaFilter())+'</p>'+
+    '<p>Jam kerja: '+esc(rkJamKerja())+'</p>'+
+    '<table border="1"><thead><tr>'+
+      '<th>No</th><th>Tanggal</th><th>Hari</th><th>NIP</th><th>Nama</th>'+
+      '<th>Masuk</th><th>Keluar</th><th>Status</th><th>Telat (menit)</th><th>Durasi</th><th>Jarak (m)</th>'+
+    '</tr></thead><tbody>';
+  REKAP.baris.forEach(function(b,i){
+    html+='<tr>'+
+      '<td>'+(i+1)+'</td>'+
+      '<td>'+esc(b.tanggal)+'</td>'+
+      '<td>'+esc(rkHari(b.tanggal))+'</td>'+
+      '<td style="mso-number-format:\'\\@\';">'+esc(b.nip)+'</td>'+
+      '<td>'+esc(b.nama)+'</td>'+
+      '<td>'+esc(rkJam(b.masuk))+'</td>'+
+      '<td>'+esc(rkJam(b.keluar))+'</td>'+
+      '<td>'+esc(b.status)+'</td>'+
+      '<td>'+(b.status==='Terlambat'?(b.telat||0):'')+'</td>'+
+      '<td>'+esc(rkDurasi(b.masuk,b.keluar))+'</td>'+
+      '<td>'+(b.jarak==null?'':Math.round(b.jarak))+'</td>'+
+    '</tr>';
+  });
+  html+='</tbody></table></body></html>';
+
+  var blob=new Blob(['\ufeff',html],{type:'application/vnd.ms-excel;charset=utf-8'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');
+  a.href=url; a.download=safeFilename('Rekap_Absensi_'+(REKAP.dari||'awal')+'_'+(REKAP.sampai||'akhir'))+'.xls';
+  document.body.appendChild(a); a.click();
+  setTimeout(function(){ URL.revokeObjectURL(url); a.remove(); },100);
+  toast('Rekap diekspor ke Excel');
+}
+
+function rkJamKerja(){
+  var c=REKAP.cfg||{};
+  if(!c.jamMasuk) return '08:00–16:30 WIB (toleransi 30 menit)';
+  return c.jamMasuk+'–'+c.jamPulang+' WIB (toleransi '+c.toleransi+' menit)';
+}
+
+function rkExportPDF(){
+  if(!REKAP.baris.length){ toast('Tidak ada data untuk dicetak',true); return; }
+  var tepat=REKAP.baris.filter(function(b){return b.status==='Tepat Waktu';}).length;
+  var telat=REKAP.baris.filter(function(b){return b.status==='Terlambat';}).length;
+  var totalTelat=REKAP.baris.reduce(function(s,b){return s+(b.status==='Terlambat'?(b.telat||0):0);},0);
+
+  var rows=REKAP.baris.map(function(b,i){
+    var kelas = b.status==='Terlambat' ? 'telat' : (b.status==='Tanpa Absen Masuk' ? 'kosong' : '');
+    return '<tr>'+
+      '<td>'+(i+1)+'</td>'+
+      '<td>'+esc(rkTanggalID(b.tanggal))+'<br><span class="sub">'+esc(rkHari(b.tanggal))+'</span></td>'+
+      '<td><b>'+esc(b.nama||'—')+'</b><br><span class="nip">'+(esc(b.nip)||'—')+'</span></td>'+
+      '<td>'+(esc(rkJam(b.masuk))||'—')+'</td>'+
+      '<td>'+(esc(rkJam(b.keluar))||'—')+'</td>'+
+      '<td class="'+kelas+'">'+esc(b.status||'—')+'</td>'+
+      '<td>'+(b.status==='Terlambat'?(b.telat+' m'):'—')+'</td>'+
+      '<td>'+(esc(rkDurasi(b.masuk,b.keluar))||'—')+'</td>'+
+      '<td>'+(esc(rkJarak(b.jarak))||'—')+'</td>'+
+    '</tr>';
+  }).join('');
+
+  var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Rekap Absensi</title>'+
+    '<style>'+
+      '@page{size:A4 portrait;margin:12mm}'+
+      '*{box-sizing:border-box}body{font-family:Arial,sans-serif;color:#1a1a1a;margin:0}'+
+      '.head{text-align:center;margin-bottom:14px}.head h1{font-size:17px;margin:0 0 4px}'+
+      '.head h2{font-size:13px;margin:0;font-weight:normal}'+
+      '.info{font-size:10px;margin:10px 0;line-height:1.7}'+
+      '.sum{display:flex;gap:18px;font-size:10px;margin:8px 0 12px;border:1px solid #ccc;padding:8px 10px}'+
+      '.sum b{font-size:13px;display:block}'+
+      'table{width:100%;border-collapse:collapse;font-size:9px}'+
+      'th{background:#0a2a40;color:#fff}th,td{border:1px solid #bbb;padding:5px;text-align:left;vertical-align:top}'+
+      'tr:nth-child(even){background:#f5f7f8}'+
+      '.nip,.sub{font-size:8px;color:#666}'+
+      'td.telat{color:#a23b3b;font-weight:bold}td.kosong{color:#8a6d10;font-weight:bold}'+
+      '.foot{margin-top:12px;font-size:8px;color:#666;text-align:right}'+
+    '</style></head><body>'+
+    '<div class="head"><h1>REKAP ABSENSI</h1><h2>Direktorat Survei dan Pemetaan Tematik</h2></div>'+
+    '<div class="info"><b>Periode:</b> '+esc(rkJudulRentang())+' &nbsp;|&nbsp; <b>Pegawai:</b> '+esc(rkNamaFilter())+
+      '<br><b>Jam kerja:</b> '+esc(rkJamKerja())+'</div>'+
+    '<div class="sum">'+
+      '<div><b>'+REKAP.baris.length+'</b>hari kehadiran</div>'+
+      '<div><b>'+tepat+'</b>tepat waktu</div>'+
+      '<div><b>'+telat+'</b>terlambat</div>'+
+      '<div><b>'+totalTelat+'</b>total menit telat</div>'+
+    '</div>'+
+    '<table><thead><tr><th>No</th><th>Tanggal</th><th>Nama / NIP</th><th>Masuk</th><th>Keluar</th>'+
+      '<th>Status</th><th>Telat</th><th>Durasi</th><th>Jarak</th></tr></thead>'+
+    '<tbody>'+rows+'</tbody></table>'+
+    '<div class="foot">Dicetak dari Dashboard Pegawai · Direktorat Survei dan Pemetaan Tematik</div>'+
+    '<script>window.onload=function(){setTimeout(function(){window.print();},300);};<\/script>'+
+    '</body></html>';
+
+  var w=window.open('','_blank');
+  if(!w){ toast('Pop-up diblokir browser. Izinkan pop-up untuk mencetak.',true); return; }
+  w.document.open(); w.document.write(html); w.document.close();
+}
+
+/* ---------- pasang ---------- */
+(function(){
+  var btn=document.getElementById('rkMuat');
+  if(!btn) return;
+  var kini=new Date();
+  document.getElementById('rkDari').value   = rkTanggalISO(new Date(kini.getFullYear(), kini.getMonth(), 1));
+  document.getElementById('rkSampai').value = rkTanggalISO(kini);
+  btn.onclick=rkMuat;
+  document.getElementById('rkPegawai').onchange=function(){ if(REKAP.mentah.length) rkRender(); };
+  document.getElementById('rkExcel').onclick=rkExportExcel;
+  document.getElementById('rkPdf').onclick=rkExportPDF;
+  window.rekapApplyRole=function(){
+    var admin=SESSION.role==='admin';
+    var nav=document.getElementById('navRekap');
+    if(nav) nav.style.display= admin ? '' : 'none';
+    var sec=document.getElementById('rekap');
+    if(sec) sec.style.display= admin ? '' : 'none';
+    if(admin) rkIsiDropdown();
+  };
+  window.rekapRefreshPegawai=rkIsiDropdown;
 })();
 
 initAuth();
