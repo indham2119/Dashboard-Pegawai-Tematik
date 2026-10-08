@@ -198,6 +198,7 @@
   .b-pppk{background:#fbf1d4;color:#8a6d10}
   .b-cpns{background:#e4f1e8;color:#2f7a44}
   .b-tenaga{background:#e6f6f9;color:#0f6f80}
+  .b-magang{background:#efe9f7;color:#5c3f91}
   .b-gol{font-family:var(--mono);background:var(--surface);color:var(--laut-800);border:1px solid var(--line);margin-top:3px}
   .tag-mut{display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;margin-top:4px}
   .tag-out{background:#f6dede;color:#a23b3b}.tag-in{background:#dcefdf;color:#2f7a44}
@@ -550,6 +551,7 @@
       <div class="grp">Daftar Pegawai</div>
       <a data-go="roster" data-kel="PNS"><span class="ic">👥</span><span class="lbl">PNS</span><span class="cnt-b" id="navc-PNS">0</span></a>
       <a data-go="roster" data-kel="TENAGA"><span class="ic">👷</span><span class="lbl">TP - TA</span><span class="cnt-b" id="navc-TENAGA">0</span></a>
+      <a data-go="roster" data-kel="MAGANG"><span class="ic">🎓</span><span class="lbl">Magang</span><span class="cnt-b" id="navc-MAGANG">0</span></a>
       <div class="grp">Aplikasi Lain</div>
       <a class="ext" href="https://statuesque-salmiakki-e2c132.netlify.app" target="_blank" rel="noopener noreferrer" data-ext title="Kalender Pegawai"><span class="ic">🗓️</span><span class="lbl">Kalender Pegawai</span><span class="cnt-b">↗</span></a>
       <a class="ext" href="https://bit.ly/KumpulanPeraturanATRBPN" target="_blank" rel="noopener noreferrer" data-ext title="Pencarian Peraturan ATR/BPN"><span class="ic">📚</span><span class="lbl">Pencarian Peraturan</span><span class="cnt-b">↗</span></a>
@@ -587,6 +589,7 @@
         <div class="seg" id="distSeg" style="margin-bottom:16px">
           <button data-dk="ASN" class="on">PNS &amp; PPPK <b id="dkc-ASN">0</b></button>
           <button data-dk="TENAGA">Tenaga Pendukung &amp; Tenaga Ahli <b id="dkc-TENAGA">0</b></button>
+          <button data-dk="MAGANG">Magang <b id="dkc-MAGANG">0</b></button>
         </div>
         <div class="grid2">
           <div class="card dist-card"><h3>Per Subdirektorat</h3>
@@ -617,6 +620,7 @@
             <div class="seg" id="seg">
               <button data-kel="PNS" class="on">PNS <b id="segc-PNS">0</b></button>
               <button data-kel="TENAGA">Tenaga Pendukung &amp; Tenaga Ahli <b id="segc-TENAGA">0</b></button>
+              <button data-kel="MAGANG">Magang <b id="segc-MAGANG">0</b></button>
             </div>
             <div class="roster-actions">
               <button class="btn-export" id="btnPdf">▣ Cetak PDF</button>
@@ -743,12 +747,13 @@
             <label class="multi-option"><input type="checkbox" value="PPPK"> <span>PPPK</span></label>
              <label class="multi-option"><input type="checkbox" value="Tenaga Ahli"> <span>TA</span></label>
               <label class="multi-option"><input type="checkbox" value="Tenaga Pendukung"> <span>TP</span></label>
+              <label class="multi-option"><input type="checkbox" value="Magang"> <span>Magang</span></label>
           </div>
         </div>
         <input id="f_status" type="hidden">
       </div>
       <div class="fld"><label>Pangkat</label><input id="f_pangkat" type="text" placeholder="Penata Tk.I"></div>
-      <div class="fld"><label>Golongan</label><input id="f_gol" type="text" placeholder="III/d"><span class="hint">PNS: IV/c · PPPK: IX · Tenaga: kosongkan</span></div>
+      <div class="fld"><label>Golongan</label><input id="f_gol" type="text" placeholder="III/d"><span class="hint">PNS: IV/c · PPPK: IX · Tenaga &amp; Magang: kosongkan</span></div>
       <div class="fld"><label>Pangkat/Gol</label><input id="f_pangkatgol" type="text" placeholder="otomatis jika kosong"></div>
       <div class="fld"><label>Eselon</label><input id="f_eselon" type="text" placeholder="II / III / IV / —"></div>
       <div class="fld full"><label>Jabatan</label><input id="f_jabatan" type="text"></div>
@@ -938,7 +943,7 @@ var GROUP_ORDER=['Direktorat Survei dan Pemetaan Tematik','Tata Usaha','IGT','TP
 var SUBDIT_SHORT={'Direktorat Survei dan Pemetaan Tematik':'Pimpinan / Dit SPT'};
 var SUBDIT_COLOR={'Direktorat Survei dan Pemetaan Tematik':'#0a2a40','Tata Usaha':'#12557e','IGT':'#2b9fb3','TPR':'#c9a227','KAWASAN':'#6b8fa8'};
 var FALLBACK_COLORS=['#4a6b7d','#8a6d10','#3a6ea5','#7a5a8f','#5a8a6f'];
-var KEL_LABEL={PNS:'PNS',TENAGA:'Tenaga Pendukung & Tenaga Ahli'};
+var KEL_LABEL={PNS:'PNS',TENAGA:'Tenaga Pendukung & Tenaga Ahli',MAGANG:'Magang'};
 var SUBDIT_FULL={
   'KAWASAN':'Subdirektorat Tematik Kawasan',
   'IGT':'Subdirektorat Informasi Geospasial Tematik',
@@ -958,12 +963,17 @@ function golRank(raw){
 function isPPPK(gol){return !String(gol||'').includes('/') && /^[IVX]+$/i.test(String(gol||'').trim());}
 function classify(status,gol){
   var s=String(status||'').toLowerCase();
+  if(kelompokOf(status)==='MAGANG')return 'Magang';
   if(s.indexOf('pppk')>=0)return 'PPPK';
   if(s.indexOf('pns')>=0)return 'PNS';
   return isPPPK(gol)?'PPPK':'PNS';
 }
 function kelompokOf(status){
   var t=String(status||'').toLowerCase();
+  // Magang diperiksa lebih dulu: istilahnya sering mengandung kata "kontrak"/"non ASN".
+  if(t.indexOf('magang')>=0||t.indexOf('pkl')>=0||t.indexOf('intern')>=0||
+     t.indexOf('praktik kerja')>=0||t.indexOf('praktek kerja')>=0||
+     t.indexOf('siswa')>=0||t.indexOf('mahasiswa')>=0) return 'MAGANG';
   if(t.indexOf('pendukung')>=0||t.indexOf('tenaga ahli')>=0||t.indexOf('ahli')>=0&&t.indexOf('tenaga')>=0||
      t.indexOf('ppnpn')>=0||t.indexOf('kontrak')>=0||t.indexOf('honor')>=0||t.indexOf('non asn')>=0||
      t.indexOf('non-asn')>=0||t.indexOf('pramu')>=0) return 'TENAGA';
@@ -1168,6 +1178,7 @@ function renderKPI(){
       pns=ACTIVE.filter(function(d){return d.kel==='PNS'&&d.status!=='PPPK';}).length,
       pppk=ACTIVE.filter(function(d){return d.status==='PPPK';}).length,
       tenaga=ACTIVE.filter(function(d){return d.kel==='TENAGA';}).length,
+      magang=ACTIVE.filter(function(d){return d.kel==='MAGANG';}).length,
       struk=ACTIVE.filter(function(d){return d.struk==='Struktural';}).length,
       mIn=DATA.filter(function(d){return mutKind(d.mutasi)==='in';}).length,
       mOut=DATA.filter(function(d){return mutKind(d.mutasi)==='out';}).length,
@@ -1178,6 +1189,7 @@ function renderKPI(){
     ['PNS',pns,pc(pns)+'% dari pegawai aktif',''],
     ['PPPK',pppk,pc(pppk)+'% dari pegawai aktif','gold'],
     ['Tenaga Pendukung & Ahli',tenaga,'non-ASN aktif','teal'],
+    ['Magang',magang,magang?(pc(magang)+'% dari pegawai aktif'):'belum ada','teal'],
     ['Struktural',struk,'jabatan pimpinan aktif',''],
     ['Mutasi',mIn+mOut,mIn+' masuk · '+mOut+' keluar','']
   ];
@@ -1222,7 +1234,16 @@ function renderDonut(list){
 }
 function renderBars(list){
   var barsEl=document.getElementById('bars'),legEl=document.getElementById('barsLegend'),rows,max;
-  if(distKel==='TENAGA'){
+  if(distKel==='MAGANG'){
+    // magang tak punya golongan -> tampilkan sebaran per subdirektorat
+    var mg={};list.forEach(function(d){var k=subShort(d.subdit)||'(Tanpa Subdit)';mg[k]=(mg[k]||0)+1;});
+    rows=Object.keys(mg).map(function(k){return {label:k,count:mg[k]};}).sort(function(a,b){return b.count-a.count;});
+    max=Math.max.apply(null,rows.map(function(r){return r.count;}))||1;
+    barsEl.innerHTML=rows.length?rows.map(function(r){
+      return '<div class="bar-row wide tenaga"><div class="gl" title="'+esc(r.label)+'">'+esc(r.label)+'</div><div class="track"><div class="fill" data-w="'+(r.count/max*100)+'"></div></div><div class="vl">'+r.count+'</div></div>';
+    }).join(''):'<div style="color:var(--ink-soft);font-size:12px">Belum ada pegawai magang.</div>';
+    legEl.innerHTML='<span><i style="background:var(--teal)"></i> Magang</span>';
+  }else if(distKel==='TENAGA'){
     // tenaga tak punya golongan -> tampilkan per jenis (status)
     var m={};list.forEach(function(d){var k=d.statusRaw||'Lainnya';m[k]=(m[k]||0)+1;});
     rows=Object.keys(m).map(function(k){return {label:k,count:m[k]};}).sort(function(a,b){return b.count-a.count;});
@@ -1249,9 +1270,9 @@ function renderJobDistribution(list){
   var card=document.getElementById('jobCard');
   if(!box||!card)return;
 
-  /* Distribusi jabatan khusus ASN aktif. Saat tab TENAGA dipilih,
-     kartu disembunyikan karena jenis tenaga sudah tampil pada grafik utama. */
-  if(distKel==='TENAGA'){
+  /* Distribusi jabatan khusus ASN aktif. Saat tab TENAGA atau MAGANG dipilih,
+     kartu disembunyikan karena sebarannya sudah tampil pada grafik utama. */
+  if(distKel==='TENAGA'||distKel==='MAGANG'){
     card.style.display='none';
     return;
   }
@@ -1385,16 +1406,23 @@ function renderDistSeg(){
   var ACTIVE=DATA.filter(isActivePegawai);
   var asn=ACTIVE.filter(function(d){return d.kel==='PNS';}).length;
   var ten=ACTIVE.filter(function(d){return d.kel==='TENAGA';}).length;
+  var mgn=ACTIVE.filter(function(d){return d.kel==='MAGANG';}).length;
   document.getElementById('dkc-ASN').textContent=asn;
   document.getElementById('dkc-TENAGA').textContent=ten;
+  document.getElementById('dkc-MAGANG').textContent=mgn;
   document.querySelectorAll('#distSeg button').forEach(function(b){b.classList.toggle('on',b.getAttribute('data-dk')===distKel);});
 }
 function renderDist(){
   var list=DATA.filter(function(d){
     if(!isActivePegawai(d))return false;
-    return distKel==='TENAGA'?d.kel==='TENAGA':d.kel==='PNS';
+    if(distKel==='TENAGA')return d.kel==='TENAGA';
+    if(distKel==='MAGANG')return d.kel==='MAGANG';
+    return d.kel==='PNS';
   });
-  document.getElementById('barsTitle').textContent = distKel==='TENAGA' ? 'Distribusi Jenis Tenaga' : 'Distribusi Golongan / Pangkat (PNS & PPPK)';
+  document.getElementById('barsTitle').textContent =
+    distKel==='TENAGA' ? 'Distribusi Jenis Tenaga' :
+    distKel==='MAGANG' ? 'Distribusi Magang per Subdirektorat' :
+    'Distribusi Golongan / Pangkat (PNS & PPPK)';
   renderDonut(list);
   renderBars(list);
   renderJobDistribution(list);
@@ -1404,10 +1432,13 @@ function renderSeg(){
   var ACTIVE=DATA.filter(isActivePegawai);
   var pns=ACTIVE.filter(function(d){return d.kel==='PNS';}).length;
   var ten=ACTIVE.filter(function(d){return d.kel==='TENAGA';}).length;
+  var mgn=ACTIVE.filter(function(d){return d.kel==='MAGANG';}).length;
   document.getElementById('segc-PNS').textContent=pns;
   document.getElementById('segc-TENAGA').textContent=ten;
+  document.getElementById('segc-MAGANG').textContent=mgn;
   document.getElementById('navc-PNS').textContent=pns;
   document.getElementById('navc-TENAGA').textContent=ten;
+  document.getElementById('navc-MAGANG').textContent=mgn;
   document.querySelectorAll('#seg button').forEach(function(b){b.classList.toggle('on',b.getAttribute('data-kel')===kelompok);});
   document.querySelectorAll('#nav a[data-kel]').forEach(function(a){a.classList.toggle('active',a.getAttribute('data-kel')===kelompok&&currentSection==='roster');});
 }
@@ -1481,7 +1512,7 @@ function renderTable(){
     var mk=mutKind(d.mutasi),rowc=mk==='out'?'mut-out':mk==='in'?'mut-in':'';
     var mtag=mk?'<div class="tag-mut '+(mk==='out'?'tag-out':'tag-in')+'">'+esc(d.mutasi)+'</div>':'';
     var braw=d.statusRaw,blow=braw.toLowerCase();
-    var bcls=d.kel==='TENAGA'?'b-tenaga':(d.status==='PPPK'?'b-pppk':(blow.indexOf('cpns')>=0?'b-cpns':'b-pns'));
+    var bcls=d.kel==='MAGANG'?'b-magang':(d.kel==='TENAGA'?'b-tenaga':(d.status==='PPPK'?'b-pppk':(blow.indexOf('cpns')>=0?'b-cpns':'b-pns')));
     var pg='<div class="pg-p">'+(esc(d.pangkat)||'—')+'</div>'+(d.gol?'<span class="badge b-gol">'+esc(d.gol)+'</span>':'');
     var KEGIATAN_LIMIT=5;
     var kegiatanHtml;
